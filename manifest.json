@@ -2,7 +2,7 @@
   "name": "Program Zilnic",
   "short_name": "Program",
   "description": "Checklist zilnic program săptămânal",
-  "start_url": "/",
+  "start_url": "/program-zilnic/",
   "display": "standalone",
   "background_color": "#0e0e11",
   "theme_color": "#0e0e11",
