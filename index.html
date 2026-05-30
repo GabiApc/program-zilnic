@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program zilnic</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e11">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Program">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --bg: #0e0e11;
+  --surface: #17171c;
+  --surface2: #1e1e25;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f0f2;
+  --muted: #6b6b78;
+  --accent: #6ee7a0;
+  --accent-dim: rgba(110,231,160,0.12);
+  --accent-text: #1a3d2b;
+
+  --c-morning: rgba(250,206,122,0.15);
+  --c-morning-t: #f5c842;
+  --c-sport: rgba(110,231,160,0.13);
+  --c-sport-t: #6ee7a0;
+  --c-ml: rgba(199,130,206,0.15);
+  --c-ml-t: #d18fe0;
+  --c-research: rgba(130,148,255,0.13);
+  --c-research-t: #8a9fff;
+  --c-meal: rgba(255,159,102,0.13);
+  --c-meal-t: #ff9f66;
+  --c-prep: rgba(160,160,180,0.1);
+  --c-prep-t: #9999aa;
+  --c-mealprep: rgba(255,180,100,0.13);
+  --c-mealprep-t: #ffb464;
+  --c-church: rgba(100,220,200,0.13);
+  --c-church-t: #64dcc8;
+  --c-free: rgba(120,120,140,0.08);
+  --c-free-t: #666677;
+}
+
+body {
+  font-family: 'Figtree', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 28px 18px 60px;
+}
+
+.container { max-width: 500px; margin: 0 auto; }
+
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.day-name {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.today-badge {
+  display: inline-block;
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 10px;
+  vertical-align: middle;
+  letter-spacing: 0.05em;
+}
+
+.date-str {
+  font-family: 'Fira Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.nav-btns { display: flex; gap: 5px; padding-top: 4px; }
+.nav-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.nav-btn:hover { background: var(--surface); color: var(--text); border-color: var(--border2); }
+.today-btn {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  padding: 0 11px;
+  width: auto;
+  color: var(--accent);
+  border-color: rgba(110,231,160,0.3);
+}
+.today-btn:hover { background: var(--accent-dim); }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.stat-label {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-val {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -1px;
+  margin-top: 4px;
+  line-height: 1;
+}
+
+.stat-val.accent { color: var(--accent); }
+
+.prog-wrap {
+  background: var(--surface2);
+  border-radius: 4px;
+  height: 3px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  margin: 22px 0 8px;
+  padding: 0 2px;
+}
+
+.section-label-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-name {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.section-label:hover .section-name { color: var(--text); }
+
+.section-count {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+.section-arrow {
+  font-size: 9px;
+  color: var(--muted);
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.section-arrow.collapsed { transform: rotate(-90deg); }
+.section-blocks.collapsed { display: none; }
+
+.block {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 11px 13px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.block:hover { background: var(--surface2); border-color: var(--border2); }
+.block.done { opacity: 0.35; }
+.block.done .block-name { text-decoration: line-through; }
+
+.check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 11px;
+  color: transparent;
+  font-weight: 600;
+}
+
+.block.done .check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.block-info { flex: 1; min-width: 0; }
+
+.block-time {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 1px;
+}
+
+.block-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.tag-morning  { background: var(--c-morning);  color: var(--c-morning-t);  border-color: rgba(245,200,66,0.2); }
+.tag-sport    { background: var(--c-sport);    color: var(--c-sport-t);    border-color: rgba(110,231,160,0.2); }
+.tag-ml       { background: var(--c-ml);       color: var(--c-ml-t);       border-color: rgba(199,130,206,0.2); }
+.tag-research { background: var(--c-research); color: var(--c-research-t); border-color: rgba(130,148,255,0.2); }
+.tag-meal     { background: var(--c-meal);     color: var(--c-meal-t);     border-color: rgba(255,159,102,0.2); }
+.tag-prep     { background: var(--c-prep);     color: var(--c-prep-t);     border-color: rgba(160,160,180,0.15); }
+.tag-mealprep { background: var(--c-mealprep); color: var(--c-mealprep-t); border-color: rgba(255,180,100,0.2); }
+.tag-church   { background: var(--c-church);   color: var(--c-church-t);   border-color: rgba(100,220,200,0.2); }
+.tag-free     { background: var(--c-free);     color: var(--c-free-t);     border-color: rgba(120,120,140,0.1); }
+
+.week-section { margin-top: 32px; }
+
+.week-header {
+  font-family: 'Fira Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.week-cell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.week-cell:hover { background: var(--surface2); border-color: var(--border2); }
+.week-cell.today { border-color: rgba(110,231,160,0.4); }
+.week-cell.viewing { background: var(--accent-dim); border-color: rgba(110,231,160,0.3); }
+
+.wc-name {
+  font-family: 'Fira Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.wc-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 3px;
+  letter-spacing: -0.5px;
+}
+
+.week-cell.today .wc-pct { color: var(--accent); }
+
+.wc-bar {
+  height: 2px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.wc-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.congrats {
+  background: var(--accent-dim);
+  border: 1px solid rgba(110,231,160,0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  font-family: 'Fira Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  text-align: center;
+  display: none;
+  letter-spacing: 0.02em;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="day-name" id="day-name">—</div>
+      <div class="date-str" id="date-str">—</div>
+    </div>
+    <div class="nav-btns">
+      <button class="nav-btn" onclick="changeDay(-1)">&#8592;</button>
+      <button class="nav-btn today-btn" onclick="goToday()">azi</button>
+      <button class="nav-btn" onclick="changeDay(1)">&#8594;</button>
+    </div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Bifate</div>
+      <div class="stat-val accent" id="stat-done">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val" id="stat-total">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Streak</div>
+      <div class="stat-val" id="stat-streak">0</div>
+    </div>
+  </div>
+
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+
+  <div id="blocks"></div>
+
+  <div class="congrats" id="congrats">// zi completă. bine făcut.</div>
+
+  <div class="week-section">
+    <div class="week-header">săptămâna curentă</div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+</div>
+
+<script>
+const SCHEDULE = {
+  0: { name: 'Duminică', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '08:00–13:30', name: 'Biserică + masă', tag: 'church' },
+    ]},
+    { label: 'După-amiază', blocks: [
+      { time: '14:00–17:00', name: 'Bloc cercetare / doctorat', tag: 'research' },
+      { time: '17:00–18:20', name: 'Relaxare', tag: 'free' },
+      { time: '18:20→', name: 'Fotbal (când se nimerește)', tag: 'sport', optional: true },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  1: { name: 'Luni', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '06:00–06:05', name: 'Trezire + igienă de bază', tag: 'morning' },
+      { time: '06:05–06:30', name: 'Alergat (25 min)', tag: 'sport' },
+      { time: '06:30–06:42', name: 'Duș', tag: 'morning' },
+      { time: '06:42–06:52', name: 'Îmbrăcat', tag: 'morning' },
+      { time: '06:52–07:07', name: 'Rugăciune', tag: 'morning' },
+      { time: '07:07–07:17', name: 'Planificarea zilei', tag: 'morning' },
+      { time: '07:17–07:35', name: 'Mic dejun', tag: 'morning' },
+    ]},
+    { label: 'Seară', blocks: [
+      { time: '17:15–18:00', name: 'Masă + tranziție', tag: 'meal' },
+      { time: '18:00–20:30', name: 'Curs ML', tag: 'ml' },
+      { time: '20:30–21:15', name: 'Cercetare / doctorat', tag: 'research' },
+      { time: '21:15–21:30', name: 'Pregătit mic dejun + pachet', tag: 'prep' },
+      { time: '21:30–22:30', name: 'Relaxare', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  2: { name: 'Marți', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '06:00–06:05', name: 'Trezire + igienă de bază', tag: 'morning' },
+      { time: '06:05–06:30', name: 'Alergat (25 min)', tag: 'sport' },
+      { time: '06:30–06:42', name: 'Duș', tag: 'morning' },
+      { time: '06:42–06:52', name: 'Îmbrăcat', tag: 'morning' },
+      { time: '06:52–07:07', name: 'Rugăciune', tag: 'morning' },
+      { time: '07:07–07:17', name: 'Planificarea zilei', tag: 'morning' },
+      { time: '07:17–07:35', name: 'Mic dejun', tag: 'morning' },
+    ]},
+    { label: 'Seară', blocks: [
+      { time: '17:15–18:15', name: 'Forță – piept, tricepși, umeri', tag: 'sport' },
+      { time: '18:15–18:30', name: 'Masă', tag: 'meal' },
+      { time: '18:30–20:00', name: 'Cercetare / învățat', tag: 'research' },
+      { time: '20:00–20:15', name: 'Pregătit mic dejun + pachet', tag: 'prep' },
+      { time: '20:15–22:30', name: 'Relaxare', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  3: { name: 'Miercuri', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '06:00–06:05', name: 'Trezire + igienă de bază', tag: 'morning' },
+      { time: '06:05–06:30', name: 'Alergat (25 min)', tag: 'sport' },
+      { time: '06:30–06:42', name: 'Duș', tag: 'morning' },
+      { time: '06:42–06:52', name: 'Îmbrăcat', tag: 'morning' },
+      { time: '06:52–07:07', name: 'Rugăciune', tag: 'morning' },
+      { time: '07:07–07:17', name: 'Planificarea zilei', tag: 'morning' },
+      { time: '07:17–07:35', name: 'Mic dejun', tag: 'morning' },
+    ]},
+    { label: 'Seară', blocks: [
+      { time: '17:15–18:00', name: 'Masă + tranziție', tag: 'meal' },
+      { time: '18:00–20:30', name: 'Curs ML', tag: 'ml' },
+      { time: '20:30–20:45', name: 'Pregătit mic dejun + pachet', tag: 'prep' },
+      { time: '20:45–22:30', name: 'Relaxare', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  4: { name: 'Joi', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '06:00–06:05', name: 'Trezire + igienă de bază', tag: 'morning' },
+      { time: '06:05–06:30', name: 'Alergat (25 min)', tag: 'sport' },
+      { time: '06:30–06:42', name: 'Duș', tag: 'morning' },
+      { time: '06:42–06:52', name: 'Îmbrăcat', tag: 'morning' },
+      { time: '06:52–07:07', name: 'Rugăciune', tag: 'morning' },
+      { time: '07:07–07:17', name: 'Planificarea zilei', tag: 'morning' },
+      { time: '07:17–07:35', name: 'Mic dejun', tag: 'morning' },
+    ]},
+    { label: 'Seară', blocks: [
+      { time: '17:15–18:15', name: 'Forță – picioare, fese', tag: 'sport' },
+      { time: '18:15–18:30', name: 'Masă', tag: 'meal' },
+      { time: '18:30–20:00', name: 'Cercetare / învățat', tag: 'research' },
+      { time: '20:00–20:15', name: 'Pregătit mic dejun + pachet', tag: 'prep' },
+      { time: '20:15–22:30', name: 'Relaxare', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  5: { name: 'Vineri', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '06:00–06:05', name: 'Trezire + igienă de bază', tag: 'morning' },
+      { time: '06:05–06:30', name: 'Alergat (25 min)', tag: 'sport' },
+      { time: '06:30–06:42', name: 'Duș', tag: 'morning' },
+      { time: '06:42–06:52', name: 'Îmbrăcat', tag: 'morning' },
+      { time: '06:52–07:07', name: 'Rugăciune', tag: 'morning' },
+      { time: '07:07–07:17', name: 'Planificarea zilei', tag: 'morning' },
+      { time: '07:17–07:35', name: 'Mic dejun', tag: 'morning' },
+    ]},
+    { label: 'Seară', blocks: [
+      { time: '17:15–18:00', name: 'Sport opțional', tag: 'sport', optional: true },
+      { time: '18:00–19:00', name: 'Cercetare ușoară', tag: 'research' },
+      { time: '19:00→', name: 'Timp liber', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+  6: { name: 'Sâmbătă', sections: [
+    { label: 'Dimineață', blocks: [
+      { time: '09:00–10:30', name: 'Forță – spate, bicepși, core', tag: 'sport' },
+      { time: '10:30–11:00', name: 'Masă', tag: 'meal' },
+    ]},
+    { label: 'După-amiază', blocks: [
+      { time: '11:00–14:00', name: 'Bloc cercetare / doctorat', tag: 'research' },
+      { time: '14:00–16:00', name: 'Meal prep pentru săptămână', tag: 'mealprep' },
+      { time: '16:00→', name: 'Timp liber', tag: 'free' },
+    ]},
+    { label: 'Rutină de noapte', blocks: [
+      { time: '22:30–22:40', name: 'Igienă de seară (spălat pe dinți etc.)', tag: 'morning' },
+      { time: '22:40–22:55', name: 'Rugăciune de seară', tag: 'morning' },
+    ]},
+  ]},
+};
+
+const DAY_SHORT=['Du','Lu','Ma','Mi','Jo','Vi','Sâ'];
+const MONTHS=['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+const TAG_NAMES={morning:'dimineață',sport:'sport',ml:'ML',research:'cercetare',meal:'masă',prep:'pregătit',mealprep:'meal prep',church:'biserică',free:'liber'};
+
+let viewDate=today();
+let data=load();
+
+function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function dateKey(d){return d.toISOString().slice(0,10);}
+function load(){try{return JSON.parse(localStorage.getItem('program-data')||'{}');}catch(e){return{};}}
+function save(){try{localStorage.setItem('program-data',JSON.stringify(data));}catch(e){}}
+
+function weekStart(d){
+  const day=d.getDay();
+  const diff=day===0?-6:1-day;
+  const m=new Date(d);m.setDate(d.getDate()+diff);return m;
+}
+
+function calcStreak(){
+  let streak=0;const t=today();let check=new Date(t);
+  for(let i=0;i<365;i++){
+    const k=dateKey(check);const dow=check.getDay();
+    const sched=SCHEDULE[dow];
+    const total=sched.sections.reduce((a,s)=>a+s.blocks.filter(b=>!b.optional).length,0);
+    const done=data[k]?Object.values(data[k]).filter(Boolean).length:0;
+    if(i===0&&done===0){check.setDate(check.getDate()-1);continue;}
+    if(total>0&&done>=Math.ceil(total*0.7)){streak++;check.setDate(check.getDate()-1);}
+    else break;
+  }
+  return streak;
+}
+
+function toggle(dateK,key){
+  if(!data[dateK])data[dateK]={};
+  data[dateK][key]=!data[dateK][key];
+  save();render();
+}
+
+function changeDay(d){viewDate=new Date(viewDate);viewDate.setDate(viewDate.getDate()+d);render();}
+function goToday(){viewDate=today();render();}
+
+function render(){
+  const dow=viewDate.getDay();
+  const sched=SCHEDULE[dow];
+  const dateK=dateKey(viewDate);
+  const todayK=dateKey(today());
+  const isToday=dateK===todayK;
+
+  document.getElementById('day-name').innerHTML=sched.name+(isToday?'<span class="today-badge">azi</span>':'');
+  document.getElementById('date-str').textContent=viewDate.getDate()+' '+MONTHS[viewDate.getMonth()]+' '+viewDate.getFullYear();
+
+  const dayData=data[dateK]||{};
+  let total=0,done=0;
+  sched.sections.forEach((sec,si)=>sec.blocks.forEach((b,bi)=>{
+    if(!b.optional)total++;
+    if(dayData[si+'-'+bi])done++;
+  }));
+
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-streak').textContent=calcStreak();
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('congrats').style.display=(pct===100&&total>0)?'block':'none';
+
+  const container=document.getElementById('blocks');
+  container.innerHTML='';
+  const collapsedKey='collapsed-'+dow;
+  let cs={};
+  try{cs=JSON.parse(localStorage.getItem(collapsedKey)||'{}');}catch(e){}
+
+  sched.sections.forEach((sec,si)=>{
+    const isCollapsed=!!cs[si];
+    const secDone=sec.blocks.filter((b,bi)=>!!dayData[si+'-'+bi]).length;
+    const secTotal=sec.blocks.filter(b=>!b.optional).length;
+
+    const lbl=document.createElement('div');
+    lbl.className='section-label';
+    lbl.innerHTML=
+      '<div class="section-label-left">'+
+        '<span class="section-name">'+sec.label+'</span>'+
+        '<span class="section-count">'+secDone+'/'+secTotal+'</span>'+
+      '</div>'+
+      '<span class="section-arrow'+(isCollapsed?' collapsed':'')+'">&#9660;</span>';
+    lbl.onclick=()=>{
+      cs[si]=!cs[si];
+      try{localStorage.setItem(collapsedKey,JSON.stringify(cs));}catch(e){}
+      render();
+    };
+    container.appendChild(lbl);
+
+    const wrap=document.createElement('div');
+    wrap.className='section-blocks'+(isCollapsed?' collapsed':'');
+    sec.blocks.forEach((b,bi)=>{
+      const key=si+'-'+bi;
+      const checked=!!dayData[key];
+      const el=document.createElement('div');
+      el.className='block'+(checked?' done':'');
+      el.onclick=()=>toggle(dateK,key);
+      el.innerHTML=
+        '<div class="check">'+(checked?'✓':'')+'</div>'+
+        '<div class="block-info">'+
+          '<div class="block-time">'+b.time+(b.optional?' · opțional':'')+'</div>'+
+          '<div class="block-name">'+b.name+'</div>'+
+        '</div>'+
+        (b.tag?'<span class="tag tag-'+b.tag+'">'+(TAG_NAMES[b.tag]||b.tag)+'</span>':'');
+      wrap.appendChild(el);
+    });
+    container.appendChild(wrap);
+  });
+
+  const wg=document.getElementById('week-grid');
+  wg.innerHTML='';
+  const ws=weekStart(today());
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const wdow=d.getDay();const wKey=dateKey(d);
+    const wS=SCHEDULE[wdow];
+    const wTotal=wS.sections.reduce((a,s)=>a+s.blocks.filter(b=>!b.optional).length,0);
+    const wDone=data[wKey]?Object.values(data[wKey]).filter(Boolean).length:0;
+    const wPct=wTotal>0?Math.round(wDone/wTotal*100):0;
+    const cell=document.createElement('div');
+    cell.className='week-cell'+(wKey===todayK?' today':'')+(wKey===dateK&&wKey!==todayK?' viewing':'');
+    cell.onclick=()=>{viewDate=new Date(d);render();};
+    cell.innerHTML='<div class="wc-name">'+DAY_SHORT[wdow]+'</div><div class="wc-pct">'+wPct+'%</div><div class="wc-bar"><div class="wc-fill" style="width:'+wPct+'%"></div></div>';
+    wg.appendChild(cell);
+  }
+}
+
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+</script>
+</body>
+</html>
