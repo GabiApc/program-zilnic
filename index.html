@@ -584,20 +584,6 @@ header {
       <label class="form-label">Orar (opțional)</label>
       <input class="form-input" id="modal-time" type="text" placeholder="ex: 06:05–06:30">
     </div>
-    <div class="form-group">
-      <label class="form-label">Categorie</label>
-      <select class="form-select" id="modal-tag">
-        <option value="morning">dimineață</option>
-        <option value="sport">sport</option>
-        <option value="ml">ML</option>
-        <option value="research">cercetare</option>
-        <option value="meal">masă</option>
-        <option value="prep">pregătit</option>
-        <option value="mealprep">meal prep</option>
-        <option value="church">biserică</option>
-        <option value="free">liber</option>
-      </select>
-    </div>
     <label class="form-check">
       <input type="checkbox" id="modal-optional">
       <span style="font-size:14px;color:var(--muted)">Opțional</span>
@@ -817,12 +803,10 @@ function openModal(ctx) {
     const b = SCHEDULE[ctx.dow].sections[ctx.si].blocks[ctx.bi];
     document.getElementById('modal-name').value = b.name;
     document.getElementById('modal-time').value = b.time || '';
-    document.getElementById('modal-tag').value = b.tag || 'morning';
     document.getElementById('modal-optional').checked = !!b.optional;
   } else {
     document.getElementById('modal-name').value = '';
     document.getElementById('modal-time').value = '';
-    document.getElementById('modal-tag').value = 'morning';
     document.getElementById('modal-optional').checked = false;
   }
   document.getElementById('modal-overlay').classList.add('open');
@@ -840,9 +824,8 @@ function saveModal() {
   const name = document.getElementById('modal-name').value.trim();
   if (!name) { document.getElementById('modal-name').focus(); return; }
   const time = document.getElementById('modal-time').value.trim();
-  const tag = document.getElementById('modal-tag').value;
   const optional = document.getElementById('modal-optional').checked;
-  const block = { name, time, tag };
+  const block = { name, time };
   if (optional) block.optional = true;
   const { dow, si, mode } = modalCtx;
   if (mode === 'edit') {
@@ -979,7 +962,6 @@ function render(){
             '<div class="block-time">'+(b.time||'')+(b.optional?' · opțional':'')+'</div>' +
             '<div class="block-name">'+b.name+'</div>' +
           '</div>' +
-          (b.tag?'<span class="tag tag-'+b.tag+'" style="margin-right:4px">'+(TAG_NAMES[b.tag]||b.tag)+'</span>':'') +
           '<div class="block-edit-controls">' +
             '<button class="ec-btn" onclick="moveBlock('+dow+','+si+','+bi+',-1)" title="Sus"'+(bi===0?' disabled':'')+'>↑</button>' +
             '<button class="ec-btn" onclick="moveBlock('+dow+','+si+','+bi+',1)" title="Jos"'+(bi===sec.blocks.length-1?' disabled':'')+'>↓</button>' +
@@ -1029,7 +1011,7 @@ function render(){
             '<div class="block-time">'+(b.time||'')+(b.optional?' · opțional':'')+'</div>'+
             '<div class="block-name">'+b.name+'</div>'+
           '</div>'+
-          (b.tag?'<span class="tag tag-'+b.tag+'">'+(TAG_NAMES[b.tag]||b.tag)+'</span>':'');
+          '';
         wrap.appendChild(el);
       });
       container.appendChild(wrap);
